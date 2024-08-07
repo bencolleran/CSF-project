@@ -90,44 +90,27 @@ for i in range(n//2):
 
 T_s_plus_s_minus=np.zeros((n,n,n,n))
 for p in range(n):
-    for q in range(n):
-        for r in range(n):
-            for s in range(n):
-                #T_s_plus_s_minus[p][q][r][s]+=0.5*(C[p][s]*D[q][r]+C[q][r]*D[p][s])#r->q,q->s
-                T_s_plus_s_minus[p][r][q][s]+=C[p][s]*D[r][q]+C[r][q]*D[p][s]#best
-                #T_s_plus_s_minus[p][q][r][s]+=-0.5*(C[p][r]*D[q][s]+C[q][s]*D[p][r])#best
-                #T_s_plus_s_minus[r][p][s][q]+=1*C[r][p]*D[s][q]+1*C[s][q]*D[r][p]
-
-O_s_minus_s_plus=np.identity(n)
-for i in range(n//2):
-    O_s_plus_s_minus[i][i]*=0
-
-T_s_minus_s_plus=np.zeros((n,n,n,n))
-for p in range(n):
-    for q in range(n):
-        for r in range(n):
-            for s in range(n):
-                #T_s_minus_s_plus[p][q][r][s]+=0.5*(D[p][s]*C[q][r]+D[q][r]*C[p][s])#r->q,q->s
-                T_s_minus_s_plus[p][r][q][s]+=D[p][s]*C[r][q]+D[r][q]*C[p][s]#best
-                #T_s_minus_s_plus[p][q][r][s]+=+0.5*(D[p][r]*C[q][s]+D[q][s]*C[p][r])#best
-                #T_s_minus_s_plus[r][p][s][q]+=1*D[r][p]*C[s][q]+1*D[s][q]*C[r][p]
+    for r in range(n):
+        for s in range(n):
+            for q in range(n):
+                #T_s_plus_s_minus[p][r][s][q]+=1*(C[p][q]*D[r][s]+C[r][s]*D[p][q])#correct
+                T_s_plus_s_minus[p][r][q][s]+=0.25*(C[p][q]*D[r][s]+C[r][s]*D[p][q])
+                T_s_plus_s_minus[r][p][q][s]+=-0.25*(C[p][q]*D[r][s]+C[r][s]*D[p][q])
+                T_s_plus_s_minus[r][p][s][q]+=0.25*(C[p][q]*D[r][s]+C[r][s]*D[p][q])
+                T_s_plus_s_minus[p][r][s][q]+=-0.25*(C[p][q]*D[r][s]+C[r][s]*D[p][q])
 
 
-#single_electron_matrix=O+F+O_s_plus_s_minus
-#double_electron_tensor=T+T_s_plus_s_minus
-#single_electron_matrix=O_s_plus_s_minus
-#double_electron_tensor=T_s_plus_s_minus
-#single_electron_matrix=O-F+O_s_minus_s_plus
-#double_electron_tensor=T+T_s_minus_s_plus
-single_electron_matrix=0.5*(O-F+O_s_minus_s_plus)+0.5*(O+F+O_s_plus_s_minus)
-double_electron_tensor=0.5*(T+T_s_minus_s_plus)+0.5*(T+T_s_plus_s_minus)
+#single_electron_matrix=O+F#+O_s_plus_s_minus
+#double_electron_tensor=T#+T_s_plus_s_minus
+single_electron_matrix=O_s_plus_s_minus
+double_electron_tensor=T_s_plus_s_minus
 singlet=[[[1,1,0,0,1],[1,0,1,1,0]],[1/np.sqrt(2),-1/np.sqrt(2)]]
 triplet=[[[1,1,0,0,1],[1,0,1,1,0]],[1/np.sqrt(2),1/np.sqrt(2)]]
 #csf=triplet
 #csf=singlet
-csf=single_site_csf('sextet',2.5)
+csf=single_site_csf('sextet',1.5)
 #print(csf)
-#csf=double_site_csf('quintet',2)
+#csf=double_site_csf('quintet',1)
 #print(csf)
 #csf=double_site_csf('quintet',1)
 task=[(i,j) for i in range(len(csf[0])) for j in range(i,len(csf[0]))]
@@ -140,12 +123,14 @@ def expectation_energy_of_dets(tple):
     +0.5*oe.contract("pqrs,pqrs->",get_two_rdm_contrib(csf[0][j],identity, csf[0][i],identity,identity,identity), double_electron_tensor,backend='jax'))
     return (i,j,E)
 
+
+
 #form the determinant only hamiltonian
 for k in range(len(task)):
     i, j, modified_value = expectation_energy_of_dets(task[k])
     hamiltonian_of_dets[i][j] = modified_value
     hamiltonian_of_dets[j][i] = modified_value
-print(hamiltonian_of_dets)
+#print(hamiltonian_of_dets)
 
 coefficient_bra=np.array(csf[1])
 coefficient_ket=np.array(csf[1])
@@ -239,3 +224,25 @@ def get_mc_two_rdm(bras,kets,bra_coeffs,ket_coeffs):
         for j in range(n_kets):
             two_rdm += get_two_rdm(bras[i], kets[j]) * bra_coeffs[i] * ket_coeffs[j]
     return two_rdm
+
+'''
+O_s_minus_s_plus=np.identity(n)
+for i in range(n//2):
+    O_s_minus_s_plus[i][i]*=0
+
+T_s_minus_s_plus=np.zeros((n,n,n,n))
+for p in range(n):
+    for q in range(n):
+        for r in range(n):
+            for s in range(n):
+                #T_s_minus_s_plus[p][q][r][s]+=0.5*(D[p][s]*C[q][r]+D[q][r]*C[p][s])#r->q,q->s
+                T_s_minus_s_plus[p][r][q][s]+=D[p][s]*C[r][q]+D[r][q]*C[p][s]#best
+                #T_s_minus_s_plus[p][q][r][s]+=-0.5*(D[p][r]*C[q][s]+D[q][s]*C[p][r])#best
+                #T_s_minus_s_plus[r][p][s][q]+=1*D[r][p]*C[s][q]+1*D[s][q]*C[r][p]
+
+single_electron_matrix=#O-F+O_s_minus_s_plus
+double_electron_tensor=T+T_s_minus_s_plus
+#single_electron_matrix=0.5*(O-F+O_s_minus_s_plus)+0.5*(O+F+O_s_plus_s_minus)
+#double_electron_tensor=0.5*(T+T_s_minus_s_plus)+0.5*(T+T_s_plus_s_minus)
+
+'''
