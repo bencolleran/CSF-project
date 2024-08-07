@@ -55,8 +55,8 @@ def get_phase_factor(alpha_idxs, beta_idxs):
         return 1
     else:
         return -1
+      
 
-#calculates the coupling coefficients for two states of defined J    
 def get_cg(j1, j2, j, m1, m2, m, analytic=False):
     r"""
     Get Clebsch-Gordon coefficients. Calculated using Sympy.
@@ -173,6 +173,19 @@ def constraints_singly(perm,n):
     else:
         return False
 
+#since alpha_indxs and beta_indxs are in a spatial orbital form, rather than an ON vector form, we must convert between them
+def ONvector_to_spatial(lst,spin):
+    #feed in an ON vector without the phase factor
+    n=len(lst)//2
+    spatial_orbs=[i for i in range(n)]
+    if spin=='a':
+        new_lst=[i for i in range(n) if lst[0:n][i]==1]
+        return new_lst
+    if spin=='b':
+        new_lst=[i for i in range(n) if lst[n:2*n][i]==1]
+        return new_lst
+
+
 #generates all SDs with a given m value
 def perms(n,m):
     nums={5:[1,1,1,1,1,0,0,0,0,0],6:[1,1,1,1,1,1,0,0,0,0]}
@@ -181,13 +194,8 @@ def perms(n,m):
     lst1 = [list(perm) for perm in unique_perms]
     lst2=[lst1[j] for j in range(len(lst1)) if constraints_singly(lst1[j],(10-sum(nums[n])))]
     lst3=[lst2[k] for k in range(len(lst2)) if 0.5*(sum(lst2[k][:5])-sum(lst2[k][5:]))==m]
-    on_vectors=[[get_phase_factor(lst3[l][:5],lst3[l][5:])]+lst3[l] for l in range(len(lst3))]
+    on_vectors=[[get_phase_factor(ONvector_to_spatial(lst3[l][:5],'a'),ONvector_to_spatial(lst3[l][5:],'b'))]+lst3[l] for l in range(len(lst3))]
     return on_vectors#with phase factor in [0]
-
-
-lst01=[len(perms(5,i-2.5)) for i in range(6)]
-lst02=[len(perms(6,i-2)) for i in range(5)]
-#print(sum(lst01)*sum(lst02)) 
 
 #convert an on vector to a genealogical spin coupling
 def genealog(lst):
