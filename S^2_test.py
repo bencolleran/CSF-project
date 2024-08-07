@@ -82,32 +82,52 @@ for p in range(n//2):
     #D[p][p+n//2]=-1
 #print(D)
 
-O_ladder=np.identity(n)
+O_s_plus_s_minus=np.identity(n)
 for i in range(n//2):
-    O_ladder[i+n//2][i+n//2]*=0
-#print(O_new)
-#O_ladder=np.zeros((n,n))
+    O_s_plus_s_minus[i+n//2][i+n//2]*=0
+#print(O_s_plus_s_minus)
+#O_s_plus_s_minus=np.zeros((n,n))
 
-T_ladder=np.zeros((n,n,n,n))
+T_s_plus_s_minus=np.zeros((n,n,n,n))
 for p in range(n):
     for q in range(n):
         for r in range(n):
             for s in range(n):
-                T_ladder[p][q][r][s]+=0.5*(C[p][s]*D[q][r]+C[q][r]*D[p][s])#r->q,q->s
-                #T_ladder[p][r][q][s]+=C[p][s]*D[r][q]+C[r][q]*D[p][s]#best
-                T_ladder[p][q][r][s]+=-0.5*(C[p][r]*D[q][s]+C[q][s]*D[p][r])#best
-                #T_ladder[r][p][s][q]+=1*C[r][p]*D[s][q]+1*C[s][q]*D[r][p]
-single_electron_matrix=O+F+O_ladder
-double_electron_tensor=T+T_ladder
-#single_electron_matrix=O_ladder
-#double_electron_tensor=T_ladder
+                #T_s_plus_s_minus[p][q][r][s]+=0.5*(C[p][s]*D[q][r]+C[q][r]*D[p][s])#r->q,q->s
+                T_s_plus_s_minus[p][r][q][s]+=C[p][s]*D[r][q]+C[r][q]*D[p][s]#best
+                #T_s_plus_s_minus[p][q][r][s]+=-0.5*(C[p][r]*D[q][s]+C[q][s]*D[p][r])#best
+                #T_s_plus_s_minus[r][p][s][q]+=1*C[r][p]*D[s][q]+1*C[s][q]*D[r][p]
+
+O_s_minus_s_plus=np.identity(n)
+for i in range(n//2):
+    O_s_plus_s_minus[i][i]*=0
+
+T_s_minus_s_plus=np.zeros((n,n,n,n))
+for p in range(n):
+    for q in range(n):
+        for r in range(n):
+            for s in range(n):
+                #T_s_minus_s_plus[p][q][r][s]+=0.5*(D[p][s]*C[q][r]+D[q][r]*C[p][s])#r->q,q->s
+                T_s_minus_s_plus[p][r][q][s]+=D[p][s]*C[r][q]+D[r][q]*C[p][s]#best
+                #T_s_minus_s_plus[p][q][r][s]+=+0.5*(D[p][r]*C[q][s]+D[q][s]*C[p][r])#best
+                #T_s_minus_s_plus[r][p][s][q]+=1*D[r][p]*C[s][q]+1*D[s][q]*C[r][p]
+
+
+#single_electron_matrix=O+F+O_s_plus_s_minus
+#double_electron_tensor=T+T_s_plus_s_minus
+#single_electron_matrix=O_s_plus_s_minus
+#double_electron_tensor=T_s_plus_s_minus
+#single_electron_matrix=O-F+O_s_minus_s_plus
+#double_electron_tensor=T+T_s_minus_s_plus
+single_electron_matrix=0.5*(O-F+O_s_minus_s_plus)+0.5*(O+F+O_s_plus_s_minus)
+double_electron_tensor=0.5*(T+T_s_minus_s_plus)+0.5*(T+T_s_plus_s_minus)
 singlet=[[[1,1,0,0,1],[1,0,1,1,0]],[1/np.sqrt(2),-1/np.sqrt(2)]]
 triplet=[[[1,1,0,0,1],[1,0,1,1,0]],[1/np.sqrt(2),1/np.sqrt(2)]]
-csf=triplet
-csf=singlet
-#csf=single_site_csf('sextet',1.5)
+#csf=triplet
+#csf=singlet
+csf=single_site_csf('sextet',2.5)
 #print(csf)
-csf=double_site_csf('quintet',2)
+#csf=double_site_csf('quintet',2)
 #print(csf)
 #csf=double_site_csf('quintet',1)
 task=[(i,j) for i in range(len(csf[0])) for j in range(i,len(csf[0]))]
