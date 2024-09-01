@@ -1,15 +1,15 @@
 import copy
 import numpy as np
-from BasicOperators import create, annihilate, excitation, overlap
+from CSFtools.BasicOperators import create, annihilate, excitation, overlap
 #import wfctn_2
-from GNMERDM import get_one_rdm_contrib
-from GNMERDM import get_two_rdm_contrib
-from GNMERDM import get_gnme_rdm
-from Wavefunction_generator_old import single_site_csf
-from Wavefunction_generator_old import double_site_csf
+from CSFtools.GNMERDM import get_one_rdm_contrib
+from CSFtools.GNMERDM import get_two_rdm_contrib
+from CSFtools.GNMERDM import get_gnme_rdm
+from CSFtools.Wavefunction_generator_old import single_site_csf
+from CSFtools.Wavefunction_generator_old import double_site_csf
 #from contextlib import redirect_stdout
 import opt_einsum as oe 
-from Wavefunction_generator_parametrised import csf_3
+from CSFtools.Wavefunction_generator import csf_3
 
 
 singlet=[[[1,1,0,0,1],[1,0,1,1,0]],[1/np.sqrt(2),-1/np.sqrt(2)]]
@@ -25,6 +25,7 @@ print(csf_3('doublet1',0.5))
 print(csf_3('doublet2',0.5))
 #csf=double_site_csf('quintet',1)
 task=[(i,j) for i in range(len(csf[0])) for j in range(i,len(csf[0]))]
+print(task)
 identity=np.identity((len(csf[0][0])-1))
 hamiltonian_of_dets=np.zeros((len(csf[0]),len(csf[0])))
 
@@ -37,12 +38,12 @@ def expectation_energy_of_dets(tple):
     i,j =tple
     Sum1=0
     for p in range(nmos//2):
-        Sum1+=get_one_rdm_contrib(csf[0][j],identity,csf[0][i],identity,identity,identity)[p][p]
+        Sum1+=get_one_rdm_contrib(csf[0][i],identity,csf[0][j],identity,identity,identity)[p][p]
     Sum2=0
     for p in range(nmos//2):
         for q in range(nmos//2):
-            print(get_two_rdm_contrib(csf[0][j],identity, csf[0][i],identity,identity,identity)[p][q+nmos//2][p+nmos//2][q],p,q)
-            Sum2+=get_two_rdm_contrib(csf[0][j],identity, csf[0][i],identity,identity,identity)[p][q+nmos//2][p+nmos//2][q]
+            print(get_two_rdm_contrib(csf[0][i],identity, csf[0][j],identity,identity,identity)[p][q+nmos//2][p+nmos//2][q],p,q)
+            Sum2+=get_two_rdm_contrib(csf[0][i],identity, csf[0][j],identity,identity,identity)[p][q+nmos//2][p+nmos//2][q]
     E=Sum1-Sum2
     return (i,j,E)
 #print(get_rdm_contrib(csf[0][2],identity,csf[0][0],identity,identity,identity))
@@ -53,6 +54,7 @@ for k in range(len(task)):
     #print(i,j,modified_value)
     hamiltonian_of_dets[i][j] = modified_value
     hamiltonian_of_dets[j][i] = modified_value
+    print(hamiltonian_of_dets)
 print(hamiltonian_of_dets)
 
 coefficient_bra=np.array(csf[1])
